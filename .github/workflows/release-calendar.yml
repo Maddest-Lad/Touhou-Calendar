@@ -1,0 +1,37 @@
+name: Build & Release ICS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 1 1 *"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: astral-sh/setup-uv@v4
+
+      - name: Generate calendar
+        run: uv run python main.py
+
+      - name: Set release tag
+        id: tag
+        run: echo "year=$(date +%Y)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.year }}
+          name: Touhou Calendar ${{ steps.tag.outputs.year }}
+          files: touhou_calendar.ics
+          fail_on_unmatched_files: true
+          make_latest: true
